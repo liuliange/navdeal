@@ -59,7 +59,7 @@ const Footer = memo(function Footer({ config, className = "" }: FooterProps) {
                 title="即刻"
               >
                 <img
-                  src="/logo_jike.png"
+                  src="/logo_jike.svg"
                   alt="即刻"
                   width={20}
                   height={20}
