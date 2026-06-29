@@ -34,9 +34,14 @@ const defaultConfig: WebsiteConfig = {
 }
 
 const Navigation = memo(function Navigation({ categories, config = defaultConfig }: NavigationProps) {
+  const [mounted, setMounted] = useState(false)
   const [activeCategory, setActiveCategory] = useState<string>('')
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
-  const { theme } = useTheme();
+  const { theme } = useTheme()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const toggleCategory = useCallback((categoryId: string) => {
     setExpandedCategories(prev => {
@@ -48,32 +53,37 @@ const Navigation = memo(function Navigation({ categories, config = defaultConfig
       }
       return next
     })
-  }, []);
+  }, [])
 
   const handleNavClick = useCallback((categoryId: string, subCategoryId?: string) => {
-    setActiveCategory(categoryId);
+    setActiveCategory(categoryId)
     
-    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    if (typeof window === 'undefined' || typeof document === 'undefined') return
     
-    const elementId = subCategoryId ? `${categoryId}-${subCategoryId}` : categoryId;
-    const element = document.getElementById(elementId);
+    const elementId = subCategoryId ? `${categoryId}-${subCategoryId}` : categoryId
+    const element = document.getElementById(elementId)
     
     if (element) {
-      const rect = element.getBoundingClientRect();
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const rect = element.getBoundingClientRect()
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop
       
       window.scrollTo({
         top: rect.top + scrollTop - 100,
         behavior: 'smooth'
-      });
+      })
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
     if (categories.length > 0 && activeCategory === '') {
-      setActiveCategory(categories[0].id);
+      setActiveCategory(categories[0].id)
     }
-  }, [categories, activeCategory]);
+  }, [categories, activeCategory])
+
+  // 如果未挂载，返回空占位，避免 hydration 错误
+  if (!mounted) {
+    return null
+  }
 
   return (
     <>
@@ -81,7 +91,7 @@ const Navigation = memo(function Navigation({ categories, config = defaultConfig
       <nav className="lg:hidden fixed top-0 left-0 right-0 z-20 bg-background border-b">
         <div className="flex items-center justify-between px-4 h-16">
           <div className="flex items-center space-x-2 flex-shrink-0">
-            <Icons.Rocket className="w-5 h-5 text-foreground" />
+            <Icons.ShoppingBag className="w-5 h-5 text-foreground" />
             <span className="neon-title text-sm sm:text-base truncate max-w-[120px] sm:max-w-[200px]">{config.SITE_TITLE}</span>
           </div>
           <div className="flex-1 mx-2 min-w-0">
@@ -121,16 +131,22 @@ const Navigation = memo(function Navigation({ categories, config = defaultConfig
       <nav className="hidden lg:block w-[280px] flex-shrink-0 h-screen sticky top-0 p-4 overflow-y-auto border-r">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-2">
-            <Icons.Rocket className="w-5 h-5 text-foreground" />
+            <Icons.ShoppingBag className="w-5 h-5 text-foreground" />
             <span className="neon-title">{config.SITE_TITLE}</span>
           </div>
           {config.SHOW_THEME_SWITCHER !== 'false' && <ThemeSwitcher />}
         </div>
+
+        {/* 桌面端搜索框 */}
+        <div className="mb-4 px-1">
+          <Search />
+        </div>
+
         <ul className="space-y-1 pb-24">
           {categories.map((category) => {
             const IconComponent = category.iconName && (category.iconName in Icons)
               ? (Icons[category.iconName as keyof typeof Icons] as React.ComponentType)
-              : Icons.Globe;
+              : Icons.Globe
 
             return (
               <li key={category.id}>
@@ -182,6 +198,6 @@ const Navigation = memo(function Navigation({ categories, config = defaultConfig
       </nav>
     </>
   )
-});
+})
 
-export default Navigation;
+export default Navigation

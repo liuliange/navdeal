@@ -43,7 +43,6 @@ export interface Link {
     iconfile: string;
     iconlink: string;
     tags: string[];
-    cover?: string; // 新增：封面图 URL
 }
 
 // Type Guard
@@ -69,17 +68,6 @@ export function isNotionLinkPage(
 // Transformer
 export function toLink(page: PageObjectResponse & { properties: NotionLinkProperties }): Link {
     const props = page.properties;
-
-    // 提取封面图 URL
-    let coverUrl = '';
-    if (page.cover) {
-        if (page.cover.type === 'file' && page.cover.file) {
-            coverUrl = page.cover.file.url;
-        } else if (page.cover.type === 'external' && page.cover.external) {
-            coverUrl = page.cover.external.url;
-        }
-    }
-
     return {
         id: page.id,
         name: extractTitle(props.Name),
@@ -91,6 +79,5 @@ export function toLink(page: PageObjectResponse & { properties: NotionLinkProper
         iconfile: extractFileUrl(props.iconfile),
         iconlink: extractUrl(props.iconlink),
         tags: extractMultiSelect(props.Tags),
-        cover: coverUrl || undefined, // 如果没有封面图，设为 undefined
     };
 }

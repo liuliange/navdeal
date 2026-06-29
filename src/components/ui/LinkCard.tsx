@@ -20,10 +20,13 @@ interface LinkCardProps {
   className?: string;
 }
 
-// 提示框组件 - 保持不变
+// 提示框组件 - 保持不变，可以考虑提取但此处暂保留
 function Tooltip({ content, show, x, y }: { content: string; show: boolean; x: number; y: number }) {
   if (!show) return null;
+  
+  // 确保在客户端环境中执行
   if (typeof window === 'undefined' || typeof document === 'undefined') return null;
+  
   return createPortal(
     <div 
       className="fixed p-2 rounded-lg bg-popover/95 backdrop-blur supports-[backdrop-filter]:bg-popover/85
@@ -41,7 +44,7 @@ function Tooltip({ content, show, x, y }: { content: string; show: boolean; x: n
   );
 }
 
-// 分离 Image 组件
+// 分离 Image 组件以避免整个 LinkCard 重渲染
 const OptimisedLinkIcon = memo(function OptimisedLinkIcon({ 
   src, 
   alt, 
@@ -61,11 +64,13 @@ const OptimisedLinkIcon = memo(function OptimisedLinkIcon({
 
         const reportImageStatus = () => {
             if (!image.complete) return false;
+
             if (image.naturalWidth > 0) {
                 onLoad?.();
             } else {
                 onError();
             }
+
             return true;
         };
 
@@ -83,6 +88,7 @@ const OptimisedLinkIcon = memo(function OptimisedLinkIcon({
     }, [src, onLoad, onError]);
 
     return (
+        // 这里刻意使用原生 img，避免 Vercel Image Optimization 免费额度消耗。
         // eslint-disable-next-line @next/next/no-img-element
         <img
             ref={imageRef}
@@ -100,19 +106,21 @@ const OptimisedLinkIcon = memo(function OptimisedLinkIcon({
     );
 }, (prev, next) => prev.src === next.src && prev.alt === next.alt);
 
+
 const LinkCard = memo(function LinkCard({ link, className }: LinkCardProps) {
   const [titleTooltip, setTitleTooltip] = useState({ show: false, x: 0, y: 0 });
   const [descTooltip, setDescTooltip] = useState({ show: false, x: 0, y: 0 });
   const [iconState, setIconState] = useState(() => getInitialIconState(link));
   const iconContainerRef = useRef<HTMLDivElement>(null);
 
-  const handleImageError = useCallback(() => {
-    setIconState(getFailedIconState());
-  }, []);
+    // 使用 useCallback 优化事件处理
+    const handleImageError = useCallback(() => {
+        setIconState(getFailedIconState());
+    }, []);
 
-  const handleImageLoad = useCallback(() => {
-    setIconState((state) => getLoadedIconState(state));
-  }, []);
+    const handleImageLoad = useCallback(() => {
+        setIconState((state) => getLoadedIconState(state));
+    }, []);
 
   const handleMouseEnter = useCallback((
     event: React.MouseEvent<HTMLElement>,
@@ -128,38 +136,51 @@ const LinkCard = memo(function LinkCard({ link, className }: LinkCardProps) {
   }, []);
 
   const handleMouseLeave = useCallback((isTitle: boolean) => {
-    const setter = isTitle ? setTitleTooltip : setDescTooltip;
+      const setter = isTitle ? setTitleTooltip : setDescTooltip;
     setter({ show: false, x: 0, y: 0 });
   }, []);
 
+  // 当 link 变化时更新图片源
   useEffect(() => {
     setIconState(getInitialIconState(link));
   }, [link]);
 
   useEffect(() => {
-    if (iconState.isLoaded || iconState.src === FALLBACK_ICON_SRC) return;
+    if (iconState.isLoaded || iconState.src === FALLBACK_ICON_SRC) {
+      return;
+    }
+
     const timeoutId = window.setTimeout(() => {
       setIconState((state) => {
-        if (state.isLoaded || state.src === FALLBACK_ICON_SRC) return state;
+        if (state.isLoaded || state.src === FALLBACK_ICON_SRC) {
+          return state;
+        }
+
         return getTimedOutIconState(state);
       });
     }, ICON_LOAD_TIMEOUT_MS);
+
     return () => window.clearTimeout(timeoutId);
   }, [iconState.isLoaded, iconState.src]);
 
   useEffect(() => {
     if (!iconState.showFallback) return;
+
     const syncImageStatus = () => {
       const image = iconContainerRef.current?.querySelector('img');
       if (!image?.complete) return false;
+
       if (image.naturalWidth > 0) {
         setIconState((state) => getLoadedIconState(state));
       } else {
         setIconState(getFailedIconState());
       }
+
       return true;
     };
+
     if (syncImageStatus()) return;
+
     let attempts = 0;
     const intervalId = window.setInterval(() => {
       attempts += 1;
@@ -167,42 +188,30 @@ const LinkCard = memo(function LinkCard({ link, className }: LinkCardProps) {
         window.clearInterval(intervalId);
       }
     }, 1000);
+
     return () => window.clearInterval(intervalId);
   }, [iconState.showFallback]);
 
   return (
     <>
-      <motion.a
+    <motion.a
         href={link.url}
         target="_blank"
         rel="noopener noreferrer"
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         className={cn(
-          "group block rounded-xl border border-border/50 bg-card hover:border-primary/50 transition-all",
+          "group block p-4 rounded-xl border border-border/50 bg-card hover:border-primary/50 transition-all",
           "hover:shadow-lg hover:shadow-primary/5",
           "w-full max-w-full",
-          "overflow-hidden",
           className
         )}
       >
-        {/* 封面图区域 - 圆角由父容器统一裁剪 */}
-        {link.cover && (
-          <div className="link-card-cover">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={link.cover}
-              alt={`${link.name} 封面`}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-          </div>
-        )}
-
-        {/* 内容容器 - 加回 p-4 保持原有间距 */}
-        <div className="flex flex-col h-full gap-2 p-4">
+        {/* 内容容器 */}
+        <div className="flex flex-col h-full gap-2">
           {/* 图标和名称行 */}
           <div className="flex items-center gap-3 flex-shrink-0">
+            {/* 图标容器 */}
             <motion.div 
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -219,11 +228,12 @@ const LinkCard = memo(function LinkCard({ link, className }: LinkCardProps) {
                   />
                 )}
                 <OptimisedLinkIcon 
-                  src={iconState.src} 
-                  alt={link.name} 
-                  onLoad={handleImageLoad}
-                  onError={handleImageError}
+                    src={iconState.src} 
+                    alt={link.name} 
+                    onLoad={handleImageLoad}
+                    onError={handleImageError}
                 />
+                 
                 {iconState.showSpinner && (
                   <div className="absolute inset-0 flex items-center justify-center bg-muted/20">
                     <div className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin"></div>
@@ -232,6 +242,7 @@ const LinkCard = memo(function LinkCard({ link, className }: LinkCardProps) {
               </div>
             </motion.div>
             
+            {/* 网站名称和图标 */}
             <div className="flex-1 min-w-0 relative">
               <div 
                 className="relative"
@@ -244,6 +255,7 @@ const LinkCard = memo(function LinkCard({ link, className }: LinkCardProps) {
                   {link.name}
                 </h3>
               </div>
+              {/* 固定位置的外链图标 */}
               <div className="absolute right-0 top-1/2 -translate-y-1/2">
                 <IconExternalLink 
                   className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" 
@@ -267,26 +279,23 @@ const LinkCard = memo(function LinkCard({ link, className }: LinkCardProps) {
             </div>
           )}
 
-          {/* 标签行 */}
+          {/* 标签行 - 放在底部 */}
           {link.tags && link.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 flex-shrink-0">
               {link.tags.slice(0, 3).map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center px-2 py-0.5 text-xs rounded-md
-                           bg-muted/40 text-muted-foreground
-                           group-hover:bg-primary/10 group-hover:text-primary/90
-                           transition-colors"
+                  className={cn(
+                    'link-tag inline-flex items-center px-2 py-0.5 text-xs rounded-md bg-muted/40 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary/90 transition-colors',
+                    tag.includes('力荐') && 'link-tag-featured'
+                  )}
                   title={tag}
                 >
-                  <span className="truncate max-w-[80px]">{tag}</span>
+                  <span className="link-tag-label truncate max-w-[80px]">{tag}</span>
                 </span>
               ))}
               {link.tags.length > 3 && (
-                <span className="inline-flex items-center px-2 py-0.5 text-xs rounded-md
-                              bg-muted/40 text-muted-foreground
-                              group-hover:bg-primary/10 group-hover:text-primary/90
-                              transition-colors shrink-0"
+                <span className="link-tag inline-flex items-center px-2 py-0.5 text-xs rounded-md bg-muted/40 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary/90 transition-colors shrink-0"
                 >
                   +{link.tags.length - 3}
                 </span>
@@ -319,17 +328,17 @@ const LinkCard = memo(function LinkCard({ link, className }: LinkCardProps) {
     </>
   );
 }, (prev, next) => {
-  // 比较时加入 cover
-  return (
-    prev.link.id === next.link.id &&
-    prev.link.name === next.link.name &&
-    prev.link.desc === next.link.desc &&
-    prev.link.url === next.link.url &&
-    prev.link.iconfile === next.link.iconfile &&
-    prev.link.iconlink === next.link.iconlink &&
-    prev.link.cover === next.link.cover &&
-    prev.className === next.className
-  );
+    // Custom comparison function for React.memo
+    // Only re-render if key props change
+    return (
+        prev.link.id === next.link.id &&
+        prev.link.name === next.link.name &&
+        prev.link.desc === next.link.desc &&
+        prev.link.url === next.link.url &&
+        prev.link.iconfile === next.link.iconfile &&
+        prev.link.iconlink === next.link.iconlink &&
+        prev.className === next.className
+    );
 });
 
 export default LinkCard;

@@ -11,8 +11,11 @@ export const defaultConfig = {
     SOCIAL_JIKE: '',
     SOCIAL_WEIBO: '',
     SOCIAL_XIAOHONGSHU: '',
-    SOCIAL_WECHAT: '',   
-    SOCIAL_DOUYIN: ''    
+    SOCIAL_WECHAT: '',
+    SOCIAL_DOUYIN: '',
+    SOCIAL_QQ: '',
+    SOCIAL_BUY: '',
+    SOCIAL_SHOP: '',
 } as const;
 
 // 环境变量配置

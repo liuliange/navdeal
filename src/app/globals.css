@@ -60,25 +60,6 @@
   }
 }
 
-@layer components {
-  /* ===== 封面图样式：仅定义比例和背景，圆角完全由父容器裁剪 ===== */
-  .link-card-cover {
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    background-color: hsl(var(--card)); /* 与卡片背景一致，避免透过显示其他颜色 */
-    /* 删除 border-radius 和 overflow-hidden，让父容器统一控制裁剪 */
-  }
-
-  .link-card-cover img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-}
-
-/* ===== 删除赛博朋克专用覆盖，因为父容器已经统一裁剪，无需额外缩进 ===== */
-
 @keyframes highlight {
   0% {
     background-color: transparent;
@@ -101,7 +82,7 @@
 /* 优化滚动行为 */
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 100px;
+  scroll-padding-top: 100px; /* 确保滚动时留出顶部空间 */
   max-width: 100vw;
   overflow-x: hidden;
 }

@@ -1,5 +1,7 @@
 /* 导入字体 */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+@import './bauhaus/style.css';
+@import './macintosh-1984/style.css';
 
 /* 基础变量 */
 :root {
@@ -221,7 +223,7 @@ body {
 [data-theme="cyberpunk-dark"] .widget-card {
   position: relative;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: 0;
   background: linear-gradient(135deg, var(--muted) 0%, var(--background) 100%);
   box-shadow: 0 0 24px 2px hsla(286, 100%, 65%, 0.25), 0 0 8px 2px hsla(180, 100%, 55%, 0.15);
   color: #fff;
@@ -234,7 +236,7 @@ body {
   position: absolute;
   inset: 0;
   padding: 2px;
-  border-radius: var(--radius-md);
+  border-radius: 0;
   background: linear-gradient(135deg, hsl(286, 100%, 65%), hsl(180, 100%, 55%));
   z-index: 1;
   pointer-events: none;
@@ -257,7 +259,7 @@ body {
 [data-theme="cyberpunk-dark"] .group {
   position: relative;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: 0;
   background: linear-gradient(135deg, var(--muted) 0%, var(--background) 100%);
   box-shadow: 0 0 24px 2px hsla(286, 100%, 65%, 0.18), 0 0 8px 2px hsla(180, 100%, 55%, 0.10);
   color: #fff;
@@ -269,7 +271,7 @@ body {
   position: absolute;
   inset: 0;
   padding: 2px;
-  border-radius: var(--radius-md);
+  border-radius: 0;
   background: linear-gradient(135deg, hsl(286, 100%, 65%), hsl(180, 100%, 55%));
   z-index: 1;
   pointer-events: none;
@@ -287,7 +289,7 @@ body {
 [data-theme="cyberpunk-dark"] .platform-tab {
   position: relative;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: 0;
   background: linear-gradient(135deg, var(--muted) 0%, var(--background) 100%);
   color: #fff;
   overflow: hidden;
@@ -298,7 +300,7 @@ body {
   position: absolute;
   inset: 0;
   padding: 2px;
-  border-radius: var(--radius-md);
+  border-radius: 0;
   background: linear-gradient(135deg, hsl(286, 100%, 65%), hsl(180, 100%, 55%));
   z-index: 1;
   pointer-events: none;
@@ -316,7 +318,7 @@ body {
 [data-theme="cyberpunk-dark"] .hot-news-item {
   position: relative;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: 0;
   background: linear-gradient(135deg, var(--muted) 0%, var(--background) 100%);
   color: #fff;
   overflow: hidden;
@@ -327,7 +329,7 @@ body {
   position: absolute;
   inset: 0;
   padding: 2px;
-  border-radius: var(--radius-md);
+  border-radius: 0;
   background: linear-gradient(135deg, hsl(286, 100%, 65%), hsl(180, 100%, 55%));
   z-index: 1;
   pointer-events: none;
@@ -417,4 +419,4 @@ body {
   70% { opacity: 0.85; filter: brightness(1.4); }
   80% { opacity: 1; filter: brightness(1.1); }
   90% { opacity: 0.95; filter: brightness(1.3); }
-}
+} 

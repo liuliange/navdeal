@@ -3,7 +3,6 @@
 import React, { memo } from 'react'
 import { WebsiteConfig } from '@/types'
 import { FaGithub, FaXTwitter } from 'react-icons/fa6'
-import { FaBlogger } from 'react-icons/fa'
 import { cn } from '@/lib/utils'
 
 interface FooterProps {
@@ -13,9 +12,9 @@ interface FooterProps {
 
 const Footer = memo(function Footer({ config, className = "" }: FooterProps) {
   return (
-    <footer className={`fixed bottom-0 left-0 right-0 bg-background border-t py-4 z-10 ${className}`}>
+    <footer className={`fixed bottom-0 left-0 right-0 bg-background border-t py-2 md:py-4 z-10 ${className}`}>
       <div className="container mx-auto px-4">
-        <div className="flex flex-col items-center gap-4 md:flex-row md:justify-between">
+        <div className="flex flex-col items-center gap-1 md:gap-4 md:flex-row md:justify-between">
           <div className="flex items-center space-x-4">
             {config.SOCIAL_GITHUB && (
               <a
@@ -36,7 +35,15 @@ const Footer = memo(function Footer({ config, className = "" }: FooterProps) {
                 className="text-muted-foreground hover:text-foreground transition-colors"
                 title="Blog"
               >
-                <FaBlogger className="w-5 h-5" />
+                <img
+                  src="/logo_blog.svg"
+                  alt="Blog"
+                  width={20}
+                  height={20}
+                  className="filter-muted hover:filter-none transition-all"
+                  loading="lazy"
+                  decoding="async"
+                />
               </a>
             )}
             {config.SOCIAL_X && (
@@ -48,6 +55,63 @@ const Footer = memo(function Footer({ config, className = "" }: FooterProps) {
                 title="X (Twitter)"
               >
                 <FaXTwitter className="w-5 h-5" />
+              </a>
+            )}
+            {config.SOCIAL_QQ && (
+              <a
+                href={config.SOCIAL_QQ}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                title="QQ"
+              >
+                <img
+                  src="/logo_qq.svg"
+                  alt="QQ"
+                  width={20}
+                  height={20}
+                  className="filter-muted hover:filter-none transition-all"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </a>
+            )}
+            {config.SOCIAL_BUY && (
+              <a
+                href={config.SOCIAL_BUY}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                title="购买"
+              >
+                <img
+                  src="/logo_buy.svg"
+                  alt="购买"
+                  width={20}
+                  height={20}
+                  className="filter-muted hover:filter-none transition-all"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </a>
+            )}
+            {config.SOCIAL_SHOPEE && (
+              <a
+                href={config.SOCIAL_SHOPEE}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                title="商城"
+              >
+                <img
+                  src="/logo_shopee.svg"
+                  alt="商城"
+                  width={20}
+                  height={20}
+                  className="filter-muted hover:filter-none transition-all"
+                  loading="lazy"
+                  decoding="async"
+                />
               </a>
             )}
             {config.SOCIAL_JIKE && (
@@ -161,6 +225,6 @@ const Footer = memo(function Footer({ config, className = "" }: FooterProps) {
       </div>
     </footer>
   )
-});
+})
 
-export default Footer;
+export default Footer
