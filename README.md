@@ -24,19 +24,23 @@ pnpm install
 pnpm dev
 ```
 
-访问 http://localhost:3000 即可预览。
+访问 <http://localhost:3000> 即可预览。
 
 ## 📦 构建部署
-bash
 
+```bash
 pnpm build
+```
 
 ## 🔗 相关链接
 
-- 快速开始：https://ezho.top/code/2025/02/21/notion-bookmarks-handbook
+- 快速开始：<https://ezho.top/code/2025/02/21/notion-bookmarks-handbook>
+- 在线预览：<https://tehuituan.cn>
 
 ## 📄 致谢
 
 本项目基于 [moyuguy/notion_bookmarks](https://github.com/moyuguy/notion_bookmarks) 二次开发，感谢原作者的杰出贡献。
+
+---
 
 Made with ❤️ for shopping lovers
