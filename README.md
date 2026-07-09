@@ -43,4 +43,4 @@ pnpm build
 
 ---
 
-Made with ❤️ for shopping lovers
+Made with ❤️ for shopping lovers.
