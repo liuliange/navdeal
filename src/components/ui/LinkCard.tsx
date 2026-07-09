@@ -201,7 +201,7 @@ const LinkCard = memo(function LinkCard({ link, className }: LinkCardProps) {
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         className={cn(
-          "group block p-4 rounded-xl border border-border/50 bg-card hover:border-primary/50 transition-all",
+          "group flex h-full flex-col p-4 rounded-xl border border-border/50 bg-card hover:border-primary/50 transition-all",
           "hover:shadow-lg hover:shadow-primary/5",
           "w-full max-w-full",
           className
@@ -281,7 +281,7 @@ const LinkCard = memo(function LinkCard({ link, className }: LinkCardProps) {
 
           {/* 标签行 - 放在底部 */}
           {link.tags && link.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 flex-shrink-0">
+            <div className="flex flex-wrap gap-1.5 mt-auto flex-shrink-0">
               {link.tags.slice(0, 3).map((tag) => (
                 <span
                   key={tag}

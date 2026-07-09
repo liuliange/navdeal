@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, memo, useCallback } from 'react'
+import React, { useState, useEffect, memo, useCallback, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher'
 import { Search } from '@/components/Search'
@@ -38,6 +38,8 @@ const Navigation = memo(function Navigation({ categories, config = defaultConfig
   const [activeCategory, setActiveCategory] = useState<string>('')
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   const { theme } = useTheme()
+  
+  const mobileMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -80,6 +82,64 @@ const Navigation = memo(function Navigation({ categories, config = defaultConfig
     }
   }, [categories, activeCategory])
 
+  // 滚动联动：监听滚动，自动高亮并滚动分类菜单
+  useEffect(() => {
+    if (typeof window === 'undefined' || categories.length === 0) return
+
+    let ticking = false
+    let currentIndex = 0
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const sections = document.querySelectorAll('.category-section')
+          if (sections.length === 0) {
+            ticking = false
+            return
+          }
+
+          const scrollPos = window.scrollY + window.innerHeight / 3
+          let newIndex = 0
+
+          sections.forEach((section, index) => {
+            const rect = section.getBoundingClientRect()
+            const sectionTop = rect.top + window.scrollY
+            if (sectionTop < scrollPos) {
+              newIndex = index
+            }
+          })
+
+          if (newIndex !== currentIndex && categories[newIndex]) {
+            currentIndex = newIndex
+            setActiveCategory(categories[newIndex].id)
+
+            if (mobileMenuRef.current) {
+              const menuItems = mobileMenuRef.current.querySelectorAll('.category-menu-item')
+              if (menuItems[newIndex]) {
+                const menuItem = menuItems[newIndex] as HTMLElement
+                const menuRect = mobileMenuRef.current.getBoundingClientRect()
+                const scrollLeft = menuItem.offsetLeft - menuRect.width / 2 + menuItem.offsetWidth / 2
+                mobileMenuRef.current.scrollTo({
+                  left: Math.max(0, scrollLeft),
+                  behavior: 'smooth'
+                })
+              }
+            }
+          }
+
+          ticking = false
+        })
+        ticking = true
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+    }
+  }, [categories])
+
   // 如果未挂载，返回空占位，避免 hydration 错误
   if (!mounted) {
     return null
@@ -101,7 +161,11 @@ const Navigation = memo(function Navigation({ categories, config = defaultConfig
             {config.SHOW_THEME_SWITCHER !== 'false' && <ThemeSwitcher />}
           </div>
         </div>
-        <div className="overflow-x-auto flex items-center h-12 border-t scrollbar-none">
+        <div 
+          ref={mobileMenuRef}
+          className="overflow-x-auto flex items-center h-12 border-t scrollbar-none"
+          style={{ scrollBehavior: 'smooth' }}
+        >
           <div className="flex px-4 min-w-full">
             <div className="flex space-x-2 mx-auto">
               {categories.map((category) => (
@@ -109,7 +173,7 @@ const Navigation = memo(function Navigation({ categories, config = defaultConfig
                   key={category.id}
                   onClick={() => handleNavClick(category.id)}
                   className={cn(
-                    "whitespace-nowrap px-3 py-1.5 text-sm rounded-full transition-colors shrink-0",
+                    "category-menu-item whitespace-nowrap px-3 py-1.5 text-sm rounded-full transition-colors shrink-0",
                     activeCategory === category.id
                       ? theme === 'simple-dark' 
                         ? "bg-primary text-primary-foreground font-medium"
@@ -137,7 +201,6 @@ const Navigation = memo(function Navigation({ categories, config = defaultConfig
           {config.SHOW_THEME_SWITCHER !== 'false' && <ThemeSwitcher />}
         </div>
 
-        {/* 桌面端搜索框 */}
         <div className="mb-4 px-1">
           <Search />
         </div>
