@@ -160,7 +160,7 @@ const Navigation = memo(function Navigation({ categories, config = defaultConfig
         <div className="flex items-center justify-between px-4 h-16">
           <div className="flex items-center space-x-2 flex-shrink-0">
             <Icons.ShoppingBag className="w-5 h-5 text-foreground" />
-            <span className="neon-title text-sm sm:text-base truncate max-w-[120px] sm:max-w-[200px]">{config.SITE_TITLE}</span>
+            <span className="neon-title text-sm sm:text-base whitespace-nowrap max-w-[120px] sm:max-w-[200px]">{config.SITE_TITLE}</span>
           </div>
           <div className="flex-1 mx-2 min-w-0">
             <Search />
