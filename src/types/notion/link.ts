@@ -15,7 +15,8 @@ import {
     extractUrl,
     extractSelect,
     extractFileInfo,
-    extractMultiSelect
+    extractMultiSelect,
+    extractColor
 } from "./common";
 import { downloadIcon } from '@/lib/icon-sync';
 
@@ -30,6 +31,7 @@ export interface NotionLinkProperties {
     iconfile: FilesPropertyItemObjectResponse;
     iconlink: UrlPropertyItemObjectResponse;
     Created: CreatedTimePropertyItemObjectResponse;
+    color: SelectPropertyItemObjectResponse;
 }
 
 // Domain Model
@@ -44,6 +46,7 @@ export interface Link {
     iconfile: string;
     iconlink: string;
     tags: string[];
+    cardColor: string;
 }
 
 // Type Guard
@@ -90,5 +93,6 @@ export async function toLink(page: PageObjectResponse & { properties: NotionLink
         iconfile,
         iconlink: extractUrl(props.iconlink),
         tags: extractMultiSelect(props.Tags),
+        cardColor: extractColor(props.color),
     };
 }

@@ -15,6 +15,7 @@ import {
   getTimedOutIconState,
 } from '@/lib/link-icon';
 import { HIDDEN_TAGS } from '@/lib/tags';
+import { useTheme } from 'next-themes';
 
 interface LinkCardProps {
   link: Link;
@@ -43,6 +44,49 @@ function Tooltip({ content, show, x, y }: { content: string; show: boolean; x: n
     </div>,
     document.body
   );
+}
+
+// Notion 颜色映射 - 与 Notionav 保持一致
+// key 对应 Notion select 选项的“名称”（中文），并额外兼容 Notion 内部英文颜色值作为别名
+const COLOR_MAP: { [key: string]: { bg: string; text: 'white' | 'black' } } = {
+  // 中文（与 Notion select 选项名称一致）
+  '红色': { bg: '#ef6064', text: 'white' },
+  '橙色': { bg: '#fb7d5e', text: 'white' },
+  '橙黄': { bg: '#f39f4a', text: 'white' },
+  '黄色': { bg: '#e5bf01', text: 'white' },
+  '绿色': { bg: '#32c050', text: 'white' },
+  '青色': { bg: '#08c4a5', text: 'white' },
+  '浅蓝': { bg: '#64c2ea', text: 'white' },
+  '蓝色': { bg: '#328eff', text: 'white' },
+  '紫色': { bg: '#4b67c3', text: 'white' },
+  '深紫': { bg: '#7f4eb4', text: 'white' },
+  '淡紫': { bg: '#af70d9', text: 'white' },
+  '粉色': { bg: '#eb7ac7', text: 'white' },
+  '灰色': { bg: '#7e8793', text: 'white' },
+  '驼色': { bg: '#b99e80', text: 'white' },
+  '米色': { bg: '#b89e80', text: 'white' },
+  // 英文别名（Notion 内部颜色值）
+  'gray': { bg: '#7e8793', text: 'white' },
+  'brown': { bg: '#b99e80', text: 'white' },
+  'orange': { bg: '#fb7d5e', text: 'white' },
+  'yellow': { bg: '#e5bf01', text: 'white' },
+  'green': { bg: '#32c050', text: 'white' },
+  'blue': { bg: '#328eff', text: 'white' },
+  'purple': { bg: '#7f4eb4', text: 'white' },
+  'pink': { bg: '#eb7ac7', text: 'white' },
+  'red': { bg: '#ef6064', text: 'white' },
+};
+
+function getCardColorData(color?: string) {
+  const colorConfig = color ? COLOR_MAP[color] : null;
+  if (!colorConfig) {
+    return { bg: '', textColor: '', applyColor: false };
+  }
+  return {
+    bg: colorConfig.bg,
+    textColor: colorConfig.text === 'white' ? '#ffffff' : '#1a1a1a',
+    applyColor: true,
+  };
 }
 
 // 分离 Image 组件以避免整个 LinkCard 重渲染
@@ -109,10 +153,17 @@ const OptimisedLinkIcon = memo(function OptimisedLinkIcon({
 
 
 const LinkCard = memo(function LinkCard({ link, className }: LinkCardProps) {
+  const [mounted, setMounted] = useState(false);
   const [titleTooltip, setTitleTooltip] = useState({ show: false, x: 0, y: 0 });
   const [descTooltip, setDescTooltip] = useState({ show: false, x: 0, y: 0 });
   const [iconState, setIconState] = useState(() => getInitialIconState(link));
   const iconContainerRef = useRef<HTMLDivElement>(null);
+  const { theme } = useTheme();
+
+  // 🆕 客户端挂载后再应用卡片配色，避免 hydration 不一致
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
     // 使用 useCallback 优化事件处理
     const handleImageError = useCallback(() => {
@@ -135,6 +186,13 @@ const LinkCard = memo(function LinkCard({ link, className }: LinkCardProps) {
       y: rect.top
     });
   }, []);
+
+  // 有颜色配置时应用 Notion 配色，否则沿用主题默认样式（mounted 后再应用）
+  const cardColorData = mounted
+    ? getCardColorData(link.cardColor)
+    : { bg: '', textColor: '', applyColor: false };
+
+  const tagUseCardColor = cardColorData.applyColor && !theme?.includes('macintosh');
 
   const handleMouseLeave = useCallback((isTitle: boolean) => {
       const setter = isTitle ? setTitleTooltip : setDescTooltip;
@@ -201,6 +259,11 @@ const LinkCard = memo(function LinkCard({ link, className }: LinkCardProps) {
         rel="noopener noreferrer"
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
+        data-has-color={cardColorData.applyColor ? 'true' : undefined}
+        style={cardColorData.applyColor ? {
+          backgroundColor: cardColorData.bg,
+          color: cardColorData.textColor,
+        } : undefined}
         className={cn(
           "group flex h-full flex-col p-4 rounded-xl border border-border/50 bg-card hover:border-primary/50 transition-all",
           "hover:shadow-lg hover:shadow-primary/5",
@@ -250,9 +313,10 @@ const LinkCard = memo(function LinkCard({ link, className }: LinkCardProps) {
                 onMouseEnter={(e) => handleMouseEnter(e, true)}
                 onMouseLeave={() => handleMouseLeave(true)}
               >
-                <h3 className="text-lg text-foreground
-                               group-hover:text-primary
-                               transition-colors line-clamp-1 pr-6">
+                <h3 className={cn(
+                  "text-lg line-clamp-1 pr-6 transition-colors",
+                  cardColorData.applyColor ? "text-current" : "text-foreground group-hover:text-primary"
+                )}>
                   {link.name}
                 </h3>
               </div>
@@ -290,16 +354,31 @@ const LinkCard = memo(function LinkCard({ link, className }: LinkCardProps) {
                   <span
                     key={tag}
                     className={cn(
-                      'link-tag inline-flex items-center px-2 py-0.5 text-xs rounded-md bg-muted/40 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary/90 transition-colors',
-                      tag.includes('力荐') && 'link-tag-featured'
+                      'link-tag inline-flex items-center px-2 py-0.5 text-xs rounded-md transition-colors',
+                      tagUseCardColor
+                        ? 'bg-white/20'
+                        : 'bg-muted/40 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary/90',
+                      tag.includes('力荐') && !tagUseCardColor && 'link-tag-featured'
                     )}
+                    style={{
+                      color: tagUseCardColor ? cardColorData.textColor : undefined,
+                    }}
                     title={tag}
                   >
                     <span className="link-tag-label truncate max-w-[80px]">{tag}</span>
                   </span>
                 ))}
                 {visibleTags.length > 3 && (
-                  <span className="link-tag inline-flex items-center px-2 py-0.5 text-xs rounded-md bg-muted/40 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary/90 transition-colors shrink-0"
+                  <span
+                    className={cn(
+                      'link-tag inline-flex items-center px-2 py-0.5 text-xs rounded-md shrink-0 transition-colors',
+                      tagUseCardColor
+                        ? 'bg-white/20'
+                        : 'bg-muted/40 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary/90'
+                    )}
+                    style={{
+                      color: tagUseCardColor ? cardColorData.textColor : undefined,
+                    }}
                   >
                     +{visibleTags.length - 3}
                   </span>
@@ -342,6 +421,7 @@ const LinkCard = memo(function LinkCard({ link, className }: LinkCardProps) {
         prev.link.url === next.link.url &&
         prev.link.iconfile === next.link.iconfile &&
         prev.link.iconlink === next.link.iconlink &&
+        prev.link.cardColor === next.link.cardColor &&
         prev.className === next.className
     );
 });

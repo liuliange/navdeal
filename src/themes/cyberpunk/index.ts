@@ -1,5 +1,4 @@
 import { type ThemeConfig } from '@/types/theme';
-import './style.css';
 
 // 赛博朋克主题配置
 export const cyberpunkTheme: ThemeConfig = {

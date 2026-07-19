@@ -79,6 +79,13 @@ export function extractMultiSelect(property: MultiSelectPropertyItemObjectRespon
 }
 
 export function extractUrl(property: UrlPropertyItemObjectResponse | unknown): string {
-    const p = property as UrlPropertyItemObjectResponse;
-    return p?.url ?? '';
+  const p = property as UrlPropertyItemObjectResponse;
+  return p?.url ?? '';
+}
+
+/**
+ * 解析 Notion select 类型的颜色属性（链接卡片配色）。
+ */
+export function extractColor(property: SelectPropertyItemObjectResponse | unknown): string {
+  return extractSelect(property);
 }

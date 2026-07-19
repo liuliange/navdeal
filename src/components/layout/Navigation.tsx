@@ -208,7 +208,7 @@ const Navigation = memo(function Navigation({ categories, config = defaultConfig
       </nav>
 
       {/* 桌面端边导航 */}
-      <nav className="hidden lg:block w-[280px] flex-shrink-0 h-screen sticky top-0 p-4 overflow-y-auto border-r">
+      <nav className="hidden lg:flex w-[280px] flex-shrink-0 h-screen sticky top-0 p-4 border-r flex-col">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-2">
             <Icons.ShoppingBag className="w-5 h-5 text-foreground" />
@@ -221,7 +221,7 @@ const Navigation = memo(function Navigation({ categories, config = defaultConfig
           <Search />
         </div>
 
-        <ul className="space-y-1 pb-24">
+        <ul className="space-y-1 pb-24 overflow-y-auto flex-1">
           {categories.map((category) => {
             const IconComponent = category.iconName && (category.iconName in Icons)
               ? (Icons[category.iconName as keyof typeof Icons] as React.ComponentType)
