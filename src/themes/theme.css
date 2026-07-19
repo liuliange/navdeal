@@ -13,6 +13,25 @@
   --transition-all: all 0.2s ease-out;
 }
 
+/* 通用滚动条（被各主题覆盖） */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--muted);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--foreground);
+}
+
 /* 简约浅色主题 */
 [data-theme="simple-light"] {
   --background: hsl(0 0% 100%);
