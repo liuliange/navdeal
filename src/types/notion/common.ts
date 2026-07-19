@@ -49,6 +49,25 @@ export function extractFileUrl(property: FilesPropertyItemObjectResponse | unkno
     return '';
 }
 
+/**
+ * 解析 Notion 文件属性。
+ * - type === 'file'：Notion 托管的文件，URL 为带签名的临时链接（约 1 小时过期），需走代理刷新。
+ * - type === 'external'：用户填写的外链，稳定不过期。
+ */
+export function extractFileInfo(property: FilesPropertyItemObjectResponse | unknown): { url: string; isNotionHosted: boolean } {
+    const p = property as FilesPropertyItemObjectResponse;
+    if (!p?.files || !Array.isArray(p.files) || !p.files[0]) return { url: '', isNotionHosted: false };
+    const file = p.files[0];
+
+    if (file.type === 'file' && file.file) {
+        return { url: file.file.url, isNotionHosted: true };
+    }
+    if (file.type === 'external' && file.external) {
+        return { url: file.external.url, isNotionHosted: false };
+    }
+    return { url: '', isNotionHosted: false };
+}
+
 export function extractSelect(property: SelectPropertyItemObjectResponse | unknown): string {
     const p = property as SelectPropertyItemObjectResponse;
     return p?.select?.name ?? '';
