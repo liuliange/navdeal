@@ -49,11 +49,19 @@
 }
 
 /* 标签效果 */
-[data-theme^="simple"] .group .tag {
+[data-theme^="simple"] .group .tag,
+[data-theme^="simple"] .group .link-tag {
   border-radius: var(--radius-sm);
   background: var(--muted);
   font-size: var(--font-size-sm);
   color: var(--muted-foreground);
+}
+
+/* 力荐标签 */
+[data-theme^="simple"] .group .link-tag-featured {
+  background: hsl(45 100% 50% / 0.25);
+  color: hsl(40 100% 30%);
+  font-weight: 600;
 }
 
 /* 导航组件样式 */

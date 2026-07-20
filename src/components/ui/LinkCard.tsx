@@ -281,7 +281,7 @@ const LinkCard = memo(function LinkCard({ link, className }: LinkCardProps) {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.1 }}
               className="relative w-10 h-10 rounded-xl overflow-hidden transition-all shrink-0
-                       bg-muted/50 p-1.5 border border-border/50"
+                       bg-muted/50 p-1.5"
             >
               <div ref={iconContainerRef} className="icon-container relative w-full h-full">
                 {iconState.showFallback && (
@@ -357,7 +357,7 @@ const LinkCard = memo(function LinkCard({ link, className }: LinkCardProps) {
                       'link-tag inline-flex items-center px-2 py-0.5 text-xs rounded-md transition-colors',
                       tagUseCardColor
                         ? 'bg-white/20'
-                        : 'bg-muted/40 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary/90',
+                        : 'bg-foreground/15 text-foreground/90 group-hover:bg-primary/15 group-hover:text-primary border border-foreground/10',
                       tag.includes('力荐') && !tagUseCardColor && 'link-tag-featured'
                     )}
                     style={{
@@ -374,7 +374,7 @@ const LinkCard = memo(function LinkCard({ link, className }: LinkCardProps) {
                       'link-tag inline-flex items-center px-2 py-0.5 text-xs rounded-md shrink-0 transition-colors',
                       tagUseCardColor
                         ? 'bg-white/20'
-                        : 'bg-muted/40 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary/90'
+                        : 'bg-foreground/15 text-foreground/90 group-hover:bg-primary/15 group-hover:text-primary border border-foreground/10'
                     )}
                     style={{
                       color: tagUseCardColor ? cardColorData.textColor : undefined,
