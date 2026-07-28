@@ -25,13 +25,15 @@ export interface NotionLinkProperties {
     Name: TitlePropertyItemObjectResponse;
     URL: UrlPropertyItemObjectResponse;
     desc: RichTextPropertyItemObjectResponse;
+    口令?: RichTextPropertyItemObjectResponse;
     category1: SelectPropertyItemObjectResponse;
     category2: SelectPropertyItemObjectResponse;
     Tags: MultiSelectPropertyItemObjectResponse;
     iconfile: FilesPropertyItemObjectResponse;
     iconlink: UrlPropertyItemObjectResponse;
     Created: CreatedTimePropertyItemObjectResponse;
-    color: SelectPropertyItemObjectResponse;
+    // 🆕 新增 color 字段（十五种预设颜色）- 可选字段，不强制要求所有数据都有
+    color?: SelectPropertyItemObjectResponse;
 }
 
 // Domain Model
@@ -46,7 +48,10 @@ export interface Link {
     iconfile: string;
     iconlink: string;
     tags: string[];
+    // 🆕 新增 cardColor 字段
     cardColor: string;
+    // 🆕 新增 command 字段（推广口令，可选）
+    command: string;
 }
 
 // Type Guard
@@ -65,6 +70,7 @@ export function isNotionLinkPage(
         'Tags' in props &&
         'iconfile' in props &&
         'iconlink' in props
+        // ✅ color 字段可选，不强制检查
         // ✅ Created 改为可选，用 page.created_time 兜底
     );
 }
@@ -94,5 +100,6 @@ export async function toLink(page: PageObjectResponse & { properties: NotionLink
         iconlink: extractUrl(props.iconlink),
         tags: extractMultiSelect(props.Tags),
         cardColor: extractColor(props.color),
+        command: props.口令 ? extractRichText(props.口令) : '',
     };
 }

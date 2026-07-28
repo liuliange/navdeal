@@ -143,7 +143,7 @@ export const getWebsiteConfig = cache(async () => {
             GA_ID: configMap.GA_ID ?? '',
             // 小组件列表（已废弃，保留兼容）
             WIDGET_CONFIG: configMap.WIDGET_CONFIG ?? '',
-            // 置顶推广角标配色（如：热销,#FF6B6B,上新,#4ECDC4）
+            // 推广广告位角标配色（如：热销,#FF6B6B,上新,#4ECDC4）
             WIDGET_BADGE_CONFIG: configMap.WIDGET_BADGE_CONFIG ?? '',
         };
 
