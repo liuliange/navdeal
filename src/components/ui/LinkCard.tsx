@@ -172,7 +172,7 @@ const OptimisedLinkIcon = memo(function OptimisedLinkIcon({
 }, (prev, next) => prev.src === next.src && prev.alt === next.alt);
 
 
-const LinkCard = memo(function LinkCard({ link, className }: LinkCardProps) {
+const LinkCard = memo(function LinkCard({ link, className, badgeMap }: LinkCardProps) {
   const [mounted, setMounted] = useState(false);
   const [titleTooltip, setTitleTooltip] = useState({ show: false, x: 0, y: 0 });
   const [descTooltip, setDescTooltip] = useState({ show: false, x: 0, y: 0 });
