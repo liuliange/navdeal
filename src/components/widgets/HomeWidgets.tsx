@@ -66,7 +66,6 @@ export default function HomeWidgets({ config }: HomeWidgetsProps) {
   const hasTagAds = !loadingTagAds && tagAdLinks.length > 0;
   const hasPromoted = !loadingPromoted && promotedLinks.length > 0;
   const { theme } = useTheme();
-  const isMacintosh = theme?.includes('macintosh');
 
   return (
     <>
