@@ -433,7 +433,7 @@ const LinkCard = memo(function LinkCard({ link, className, badgeMap }: LinkCardP
                 onClick={(e) => handleContentClick(e, 'title')}
               >
                 <h3 className={cn(
-                  "text-lg line-clamp-1 transition-colors",
+                  "text-base line-clamp-1 transition-colors",
                   cardColorData.applyColor ? "text-current" : "text-foreground group-hover:text-primary"
                 )}>
                   {link.name}
@@ -450,7 +450,7 @@ const LinkCard = memo(function LinkCard({ link, className, badgeMap }: LinkCardP
                 onMouseLeave={() => handleMouseLeave(false)}
                 onClick={(e) => handleContentClick(e, 'desc')}
               >
-              <p className="text-sm text-foreground/80
+              <p className="text-xs text-foreground/80
                          group-hover:text-foreground
                          line-clamp-2 transition-colors">
                 {link.desc}
