@@ -4,8 +4,7 @@ import {
     RichTextPropertyItemObjectResponse,
     UrlPropertyItemObjectResponse,
     SelectPropertyItemObjectResponse,
-    FilesPropertyItemObjectResponse,
-    MultiSelectPropertyItemObjectResponse
+    FilesPropertyItemObjectResponse
 } from "@notionhq/client/build/src/api-endpoints";
 
 export function isPageObjectResponse(page: unknown): page is PageObjectResponse {
@@ -60,13 +59,6 @@ export function extractFileInfo(prop: FilesPropertyItemObjectResponse): { url: s
         }
     }
     return { url: '', isNotionHosted: false };
-}
-
-export function extractMultiSelect(prop: MultiSelectPropertyItemObjectResponse): string[] {
-    if (prop.type === 'multi_select' && prop.multi_select && Array.isArray(prop.multi_select)) {
-        return prop.multi_select.map((item) => item.name);
-    }
-    return [];
 }
 
 /**
