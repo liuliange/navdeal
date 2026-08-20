@@ -29,6 +29,13 @@
   --ring: hsl(217 89% 45%);
   --highlight-bg: rgba(226, 29, 35, 0.16);
 
+  /* 卡片底栏：CodeBuddy slate-800 中性深灰 + 纸白字（全主题统一配色） */
+  --card-footer: #1e293b;
+  --card-footer-fg: hsl(0 0% 98%);
+
+  /* 无颜色卡片 lucide 图标颜色：包豪斯纸白底用墨色图标 */
+  --icon-color: var(--bauhaus-ink);
+
   background-color: var(--bauhaus-paper);
   color: var(--bauhaus-ink);
   font-family: var(--font-sans);
@@ -97,16 +104,6 @@
 
 [data-theme="bauhaus-primary"] .group:hover h3 {
   color: var(--bauhaus-blue);
-}
-
-[data-theme="bauhaus-primary"] .group .icon-container {
-  border-radius: 0.25rem;
-  background: var(--bauhaus-yellow);
-}
-
-[data-theme="bauhaus-primary"] .group [class*="bg-muted"] {
-  background-color: var(--bauhaus-yellow);
-  border-color: var(--bauhaus-ink);
 }
 
 [data-theme="bauhaus-primary"] .group .link-tag,

@@ -114,4 +114,18 @@ html, body {
   }
 }
 
+/* 搜索框关键词向上滚动（无缝循环：内容复制两份，translateY(-50%) 后回到起点） */
+@keyframes search-scroll-up {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+.search-scroll-track {
+  animation: search-scroll-up 10s linear infinite;
+}
+
 

@@ -61,6 +61,13 @@
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  /* 卡片底栏：CodeBuddy slate-800 中性深灰 + 近白字（全主题统一配色） */
+  --card-footer: #1e293b;
+  --card-footer-fg: hsl(210 40% 98%);
+
+  /* 无颜色卡片上 lucide 图标颜色：浅色白底卡片用深灰图标，否则白色图标看不见 */
+  --icon-color: hsl(222.2 47.4% 25%);
 }
 
 /* 简约深色主题 */
@@ -92,4 +99,11 @@
   --shadow-sm: 0 1px 2px 0 rgb(255 255 255 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(255 255 255 / 0.1), 0 2px 4px -2px rgb(255 255 255 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(255 255 255 / 0.1), 0 4px 6px -4px rgb(255 255 255 / 0.1);
+
+  /* 卡片底栏：Tailwind slate-800 中性深灰 + 近白字（仿 CodeBuddy 终端色） */
+  --card-footer: #1e293b;
+  --card-footer-fg: hsl(210 40% 98%);
+
+  /* 深色主题下无颜色卡片的 lucide 图标用白色 */
+  --icon-color: hsl(0 0% 100%);
 }

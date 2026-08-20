@@ -43,6 +43,14 @@
   --secondary-foreground: var(--mac-ink);
   --accent: var(--mac-paper);
   --accent-foreground: var(--mac-ink);
+
+  /* 卡片底栏：slate-800 中性深灰（复古顶栏配现代深灰底，形成年代反差感）+ 纸白字 */
+  --card-footer: #1e293b;
+  --card-footer-fg: var(--mac-paper);
+
+  /* 无颜色卡片 lucide 图标颜色：麦金塔浅灰底用墨色图标 */
+  --icon-color: var(--mac-ink);
+
   --shadow-sm: 2px 2px 0 var(--mac-ink);
   --shadow-md: 4px 4px 0 var(--mac-ink);
   --shadow-lg: 6px 6px 0 var(--mac-ink);
@@ -161,7 +169,8 @@
 }
 
 [data-theme="macintosh-1984"] div.group .icon-container,
-[data-theme="macintosh-1984"] div.group [class*="bg-muted"] {
+[data-theme="macintosh-1984"] div.group [class*="bg-muted"],
+[data-theme="macintosh-1984"] div.group [class*="bg-white/20"] {
   color: var(--mac-ink) !important;
   background: var(--mac-paper) !important;
   border: var(--mac-line) !important;
@@ -302,4 +311,23 @@
   background: var(--mac-gray);
   border: 2px solid var(--mac-ink);
   box-shadow: var(--mac-control-shadow);
+}
+
+/* 彩色卡片顶栏：拉回到 div.group 顶部(覆盖 1.65rem 的 padding-top + ::before 装饰条)，
+   并在内部顶部重绘一条相同的麦金塔标题栏纹理，实现“装饰条可见 + 彩色铺满无间隙”。 */
+[data-theme="macintosh-1984"] div.group .mac-topbar {
+  margin-top: -1.65rem;
+  z-index: 1;
+}
+
+[data-theme="macintosh-1984"] div.group .mac-titlebar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 0.95rem;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--mac-titlebar);
+  border-bottom: var(--mac-line);
 }

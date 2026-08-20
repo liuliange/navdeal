@@ -2,8 +2,24 @@
 // 角标名称完全由 Notion 库 promo 单选字段决定，代码不再写死名字（改名字只在 Notion 操作）。
 // promo 字段中任何不在 HIDDEN_TAGS 里的非空值都视为角标，颜色按下方调色板顺序自动分配。
 
-// 角标调色板：promo 字段各选项按顺序对应一种颜色（改色只改这里，名称以 Notion 为准）
-export const BADGE_COLORS = ['#FF6B6B', '#4ECDC4', '#FFB347', '#A29BFE', '#5B8DEF'];
+// 标签/角标调色板：普通标签与 promo 角标共用，按出现顺序从 15 色中轮转分配（改色只改这里）
+export const BADGE_COLORS = [
+  '#FF6B6B', // 珊瑚红
+  '#4ECDC4', // 薄荷绿
+  '#FFB347', // 暖橙
+  '#A29BFE', // 薰衣草紫
+  '#5B8DEF', // 天蓝
+  '#FF8FB1', // 樱粉
+  '#06D6A0', // 翡翠绿
+  '#F72585', // 品红
+  '#7209B7', // 紫罗兰
+  '#3A86FF', // 宝蓝
+  '#FB8500', // 橘黄
+  '#8ECAE6', // 浅蓝
+  '#FFD166', // 明黄
+  '#06AED0', // 湖青
+  '#EF476F', // 玫红
+];
 
 // 特殊标签：仅用于代码识别广告位，不应作为普通标签展示给用户
 export const TAG_AD_TAG = '标签广告';
@@ -12,8 +28,8 @@ export const TAG_AD_TAG = '标签广告';
 export const BOTTOM_RECOMMEND_TAG = '底部推荐';
 
 // 普通卡片上需要隐藏的特殊标签（给代码看、不给用户看）
-// 这些标签现在存放在 system 单选字段，不再混在 tags 中
+// 注意：这些标签现在存放在 system 单选字段，不再混在 tags 中
 export const HIDDEN_TAGS = [TAG_AD_TAG, BOTTOM_RECOMMEND_TAG];
 
-// 推广位（角标位）最多展示数量
+// 置顶推广位最多展示数量
 export const MAX_PROMOTED = 5;

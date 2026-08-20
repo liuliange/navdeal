@@ -31,6 +31,9 @@ export interface NotionLinkProperties {
     system: SelectPropertyItemObjectResponse;
     iconfile: FilesPropertyItemObjectResponse;
     iconlink: UrlPropertyItemObjectResponse;
+    // 🆕 新增 lucide 字段（文本）：填写 lucide 图标名（如 youtube / book / settings），
+    // 渲染时优先于 iconfile/iconlink 使用 lucide-react 组件，去 lucide.dev/icons 复制名称即可
+    lucide?: RichTextPropertyItemObjectResponse;
     Created: CreatedTimePropertyItemObjectResponse;
     // 🆕 新增 color 字段（十五种预设颜色）- 可选字段，不强制要求所有数据都有
     color?: SelectPropertyItemObjectResponse;
@@ -47,6 +50,8 @@ export interface Link {
     category2: string;
     iconfile: string;
     iconlink: string;
+    // 🆕 新增 lucide 图标名字段
+    lucide: string;
     tags: string[];
     // 🆕 新增 promo 字段（单选）：承载角标标签（领优惠券/好物精选等5个）
     promo: string;
@@ -104,6 +109,7 @@ export async function toLink(page: PageObjectResponse & { properties: NotionLink
         category2: extractSelect(props.category2) || '默认',
         iconfile,
         iconlink: extractUrl(props.iconlink),
+        lucide: props.lucide ? extractRichText(props.lucide) : '',
         tags: props.Tags ? [extractSelect(props.Tags)].filter(Boolean) as string[] : [],
         promo: extractSelect(props.promo) || '',
         system: extractSelect(props.system) || '',

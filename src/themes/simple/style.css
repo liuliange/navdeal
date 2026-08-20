@@ -42,12 +42,6 @@
   color: var(--card-foreground);
 }
 
-/* 图标容器效果 */
-[data-theme^="simple"] .group .icon-container {
-  border-radius: 9999px;
-  background: var(--muted);
-}
-
 /* 标签效果 */
 [data-theme^="simple"] .group .tag,
 [data-theme^="simple"] .group .link-tag {
