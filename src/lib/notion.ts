@@ -58,8 +58,11 @@ export const getLinks = cache(async () => {
             nextCursor = response.next_cursor || undefined;
         }
 
+        // 过滤草稿：Draft 状态的链接不公开，不出现在任何列表/推荐/搜索中
+        const visibleLinks = allLinks.filter((l) => l.status !== 'Draft');
+
         // 对链接进行排序：先按是否置顶，再按创建时间
-        allLinks.sort((a, b) => {
+        visibleLinks.sort((a, b) => {
             const aIsTop = a.tags.includes('力荐👍');
             const bIsTop = b.tags.includes('力荐👍');
 
@@ -71,9 +74,9 @@ export const getLinks = cache(async () => {
         });
 
         // 清理已无对应链接的孤儿图标文件，回收空间
-        cleanupOrphanIcons(new Set(allLinks.map((l) => l.id)));
+        cleanupOrphanIcons(new Set(visibleLinks.map((l) => l.id)));
 
-        return allLinks;
+        return visibleLinks;
     } catch (error) {
         console.error('Error fetching links:', error);
         throw new Error(`Failed to fetch links from Notion: ${error}`);

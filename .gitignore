@@ -68,3 +68,6 @@ openspec/
 docs/
 outputs/
 design-qa.md
+
+# CodeBuddy working memory (internal, not for VCS)
+.codebuddy/

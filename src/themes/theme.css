@@ -5,12 +5,28 @@
 @import './cyberpunk/style.css';
 
 /* 基础变量 */
-::root {
+html {
   --font-sans: 'Noto Sans SC', system-ui, -apple-system, sans-serif;
   --radius-sm: 0.3rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.8rem;
   --transition-all: all 0.2s ease-out;
+
+  /* 卡片布局统一变量：跨主题收敛，LinkCard 不再写主题条件判断 */
+  --card-gap: 0.25rem;
+  --card-topbar-pad-top: 0.625rem;
+  --card-topbar-pad-right: 0.625rem;
+  --card-topbar-pad-bottom: 0.25rem;
+  --card-topbar-pad-left: 0.625rem;
+  --card-topbar-min-height: 0rem;
+  --card-topbar-min-height-colored: 0rem;
+  --card-hover-scale: 1.02;
+  /* 有颜色卡片的表面背景：默认半透明白（配合 backdrop-blur 毛玻璃） */
+  --card-surface-colored: rgba(255, 255, 255, 0.08);
+  /* 有颜色卡片内图标/标题文字色：默认白色（彩色背景上白字） */
+  --card-fg-colored: #ffffff;
+  /* 操作按钮是否需要实色覆盖：默认 0（半透明默认样式），simple 主题设为 1 */
+  --card-action-override: 0;
 }
 
 /* 通用滚动条（被各主题覆盖） */
@@ -68,6 +84,9 @@
 
   /* 无颜色卡片上 lucide 图标颜色：浅色白底卡片用深灰图标，否则白色图标看不见 */
   --icon-color: hsl(222.2 47.4% 25%);
+
+  /* simple 主题：操作按钮用实色覆盖 base.css 的全局 button 主题色 */
+  --card-action-override: 1;
 }
 
 /* 简约深色主题 */
@@ -106,4 +125,7 @@
 
   /* 深色主题下无颜色卡片的 lucide 图标用白色 */
   --icon-color: hsl(0 0% 100%);
+
+  /* simple 主题：操作按钮用实色覆盖 base.css 的全局 button 主题色 */
+  --card-action-override: 1;
 }

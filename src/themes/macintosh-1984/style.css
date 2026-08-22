@@ -51,6 +51,12 @@
   /* 无颜色卡片 lucide 图标颜色：麦金塔浅灰底用墨色图标 */
   --icon-color: var(--mac-ink);
 
+  /* 卡片布局统一变量覆盖：麦金塔顶栏需为标题栏纹理预留 0.95rem 高度 */
+  --card-topbar-pad-top: calc(0.95rem + 0.625rem);
+  --card-hover-scale: 1;
+  /* 有颜色卡片表面用面板纸白（不用半透明毛玻璃，保持麦金塔窗口质感） */
+  --card-surface-colored: var(--mac-panel);
+
   --shadow-sm: 2px 2px 0 var(--mac-ink);
   --shadow-md: 4px 4px 0 var(--mac-ink);
   --shadow-lg: 6px 6px 0 var(--mac-ink);
@@ -313,14 +319,22 @@
   box-shadow: var(--mac-control-shadow);
 }
 
-/* 彩色卡片顶栏：拉回到 div.group 顶部(覆盖 1.65rem 的 padding-top + ::before 装饰条)，
-   并在内部顶部重绘一条相同的麦金塔标题栏纹理，实现“装饰条可见 + 彩色铺满无间隙”。 */
-[data-theme="macintosh-1984"] div.group .mac-topbar {
+/* 顶栏统一框架：拉回到 div.group 顶部(覆盖 1.65rem 的 padding-top + ::before 装饰条)，
+   并在内部顶部重绘一条相同的麦金塔标题栏纹理，实现“装饰条可见 + 彩色铺满无间隙”。
+   通过 .card-topbar 类驱动（LinkCard 内始终渲染该结构），无需 JS 主题条件判断。 */
+[data-theme="macintosh-1984"] div.group .card-topbar {
   margin-top: -1.65rem;
   z-index: 1;
+  position: relative;
+}
+
+/* 装饰条默认隐藏，仅在麦金塔主题下显示（避免 :not() 反向选择器误匹配中间祖先元素） */
+.mac-titlebar-overlay {
+  display: none;
 }
 
 [data-theme="macintosh-1984"] div.group .mac-titlebar-overlay {
+  display: block;
   position: absolute;
   top: 0;
   left: 0;

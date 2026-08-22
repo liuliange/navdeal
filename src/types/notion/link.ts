@@ -37,6 +37,10 @@ export interface NotionLinkProperties {
     Created: CreatedTimePropertyItemObjectResponse;
     // 🆕 新增 color 字段（十五种预设颜色）- 可选字段，不强制要求所有数据都有
     color?: SelectPropertyItemObjectResponse;
+    // 🆕 新增 status 字段（单选）：Draft / Published / Encrypted，控制卡片可见性与访问控制
+    status?: SelectPropertyItemObjectResponse;
+    // 🆕 新增 password 字段（文本）：加密卡片的密码（SHA-256 哈希），Encrypted 状态时校验
+    password?: RichTextPropertyItemObjectResponse;
 }
 
 // Domain Model
@@ -61,6 +65,10 @@ export interface Link {
     cardColor: string;
     // 🆕 新增 command 字段（推广口令，可选）
     command: string;
+    // 🆕 新增 status 字段（可见性状态）
+    status: 'Draft' | 'Published' | 'Encrypted';
+    // 🆕 新增 passwordHash 字段（加密卡片密码的 SHA-256 哈希，其他状态为空字符串）
+    passwordHash: string;
 }
 
 // Type Guard
@@ -115,5 +123,13 @@ export async function toLink(page: PageObjectResponse & { properties: NotionLink
         system: extractSelect(props.system) || '',
         cardColor: extractColor(props.color),
         command: props.口令 ? extractRichText(props.口令) : '',
+        status: normalizeStatus(extractSelect(props.status)),
+        passwordHash: props.password ? extractRichText(props.password) : '',
     };
+}
+
+// 归一化 status：只接受 Draft / Published / Encrypted，默认 Published（公开）
+function normalizeStatus(raw: string): Link['status'] {
+    if (raw === 'Draft' || raw === 'Encrypted') return raw;
+    return 'Published';
 }

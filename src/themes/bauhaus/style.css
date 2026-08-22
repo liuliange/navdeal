@@ -36,6 +36,9 @@
   /* 无颜色卡片 lucide 图标颜色：包豪斯纸白底用墨色图标 */
   --icon-color: var(--bauhaus-ink);
 
+  /* 包豪斯主题自带 :hover transform translate，禁用 framer 缩放避免叠加产生白边 */
+  --card-hover-scale: 1;
+
   background-color: var(--bauhaus-paper);
   color: var(--bauhaus-ink);
   font-family: var(--font-sans);

@@ -14,9 +14,11 @@ import {
   getInitialIconState,
   getLoadedIconState,
   getTimedOutIconState,
+  type IconLoadState,
 } from '@/lib/link-icon';
 import { HIDDEN_TAGS, BADGE_COLORS } from '@/lib/tags';
-import { useTheme } from 'next-themes';
+import { verifyPassword } from '@/lib/password';
+import PasswordDialog from '@/components/ui/PasswordDialog';
 
 // 角标名称 → 颜色 的稳定映射：按角标名首次出现顺序从 BADGE_COLORS 轮转分配，
 // 保证同一次运行内同名角标颜色固定，且不依赖任何外部配置。
@@ -27,6 +29,27 @@ function getBadgeColor(name: string): string {
     badgeColorCache.set(name, BADGE_COLORS[idx]);
   }
   return badgeColorCache.get(name)!;
+}
+
+// 复制文本兜底：navigator.clipboard 在非安全上下文（HTTP/局域网 IP）下不可用，
+// 用隐藏 textarea + document.execCommand('copy') 兜底（该 API 在 HTTP 下仍可用）。
+function copyTextFallback(text: string): boolean {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    ta.style.top = '0';
+    ta.setAttribute('readonly', '');
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
 }
 
 interface LinkCardProps {
@@ -171,12 +194,14 @@ const OptimisedLinkIcon = memo(function OptimisedLinkIcon({
   src, 
   alt, 
   onLoad, 
-  onError 
+  onError,
+  hidden = false,
 }: { 
   src: string; 
   alt: string; 
   onLoad?: () => void; 
   onError: () => void;
+  hidden?: boolean;
 }) {
     const imageRef = useRef<HTMLImageElement>(null);
 
@@ -217,16 +242,69 @@ const OptimisedLinkIcon = memo(function OptimisedLinkIcon({
             src={src}
             alt={alt}
             className={cn(
-                "w-full h-full object-contain transition-opacity duration-200"
+                "w-full h-full object-contain transition-opacity duration-200",
+                // 兜底模式：用 opacity-0 + absolute 覆盖定位隐藏（而非 display:none），
+                // 保证浏览器仍会加载该图片（display:none 会让 lazy 图片根本不发起请求）
+                hidden && "opacity-0 absolute inset-0"
             )}
             onLoad={onLoad}
             onError={onError}
-            loading="lazy"
+            // 兜底模式下必须 eager 加载，否则 lazy + 隐藏会导致图片永远不加载、无法恢复
+            loading={hidden ? 'eager' : 'lazy'}
             decoding="async"
-            fetchPriority="low"
+            fetchPriority={hidden ? 'auto' : 'low'}
         />
     );
 }, (prev, next) => prev.src === next.src && prev.alt === next.alt);
+
+// 远程图标渲染：统一处理「正常显示 / 超时兜底 Globe / 加载中」三种状态。
+// 关键修复：当 showFallback（超时）时，不再卸载 <img>，而是保留一个隐藏的 img 继续后台加载；
+// 一旦加载成功会触发 onLoad → 恢复真实图标。避免「lazy 图片未及时加载 → 4s 超时变 Globe → img 被卸载 → 永远无法恢复」的 bug。
+function RemoteIcon({
+  iconState,
+  link,
+  onLoad,
+  onError,
+}: {
+  iconState: IconLoadState;
+  link: Link;
+  onLoad: () => void;
+  onError: () => void;
+}) {
+  // 有远程图标地址（iconfile/iconlink 命中），才可能有真实图片；否则纯兜底，只显示 Globe
+  const hasRemoteSrc = iconState.src !== FALLBACK_ICON_SRC;
+
+  if (!hasRemoteSrc) {
+    // 无任何远程图标：直接显示 Globe 兜底
+    return <LucideIcons.Globe className="w-full h-full" />;
+  }
+
+  if (iconState.showFallback) {
+    // 超时兜底：显示 Globe，同时保留隐藏 img 继续加载，加载成功后 onLoad 会恢复真实图标
+    return (
+      <>
+        <LucideIcons.Globe className="w-full h-full" />
+        <OptimisedLinkIcon
+          src={iconState.src}
+          alt={link.name}
+          onLoad={onLoad}
+          onError={onError}
+          hidden
+        />
+      </>
+    );
+  }
+
+  // 正常/加载中：显示真实 img（加载成功后 onLoad 停掉 spinner）
+  return (
+    <OptimisedLinkIcon
+      src={iconState.src}
+      alt={link.name}
+      onLoad={onLoad}
+      onError={onError}
+    />
+  );
+}
 
 
 const LinkCard = memo(function LinkCard({ link, className, showPromoBadge = false }: LinkCardProps) {
@@ -241,12 +319,34 @@ const LinkCard = memo(function LinkCard({ link, className, showPromoBadge = fals
   // 触屏设备点击被折叠标题/描述时，提示框显示在卡片上方（而非屏幕底部）
   const [touchTooltip, setTouchTooltip] = useState<{ show: boolean; rect: DOMRect | null; content: string }>({ show: false, rect: null, content: '' });
   const touchTimer = useRef<number | undefined>(undefined);
-  const { theme } = useTheme();
+
+  // 🆕 加密卡片：密码对话框状态 + 解锁状态（解锁后本次会话内免密跳转）
+  const isEncrypted = link.status === 'Encrypted';
+  const [unlockOpen, setUnlockOpen] = useState(false);
+  const [unlockError, setUnlockError] = useState('');
+  const [unlocked, setUnlocked] = useState(false);
+  const unlockTargetRef = useRef<string>('');
 
   // 🆕 客户端挂载后再应用卡片配色，避免 hydration 不一致
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // 🆕 卡片悬停缩放：从 CSS 变量 --card-hover-scale 读取（默认 1.02；包豪斯/麦金塔设为 1 禁用）。
+  const [hoverScale, setHoverScale] = useState(1.02);
+  useEffect(() => {
+    if (!mounted) return;
+    const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-hover-scale') || '1.02');
+    if (!Number.isNaN(v)) setHoverScale(v);
+  }, [mounted]);
+
+  // 🆕 操作按钮覆盖：从 CSS 变量 --card-action-override 读取（simple 主题设为 '1'）。
+  const [actionOverride, setActionOverride] = useState(false);
+  useEffect(() => {
+    if (!mounted) return;
+    const v = getComputedStyle(document.documentElement).getPropertyValue('--card-action-override').trim();
+    setActionOverride(v === '1');
+  }, [mounted]);
 
     // 使用 useCallback 优化事件处理
     const handleImageError = useCallback(() => {
@@ -284,10 +384,6 @@ const LinkCard = memo(function LinkCard({ link, className, showPromoBadge = fals
     ? getCardColorData(link.cardColor)
     : { bg: '', textColor: '', applyColor: false };
 
-  // 兜底图标判断：图片加载失败/超时（showFallback），或本就无 iconfile/iconlink（src === FALLBACK_ICON_SRC）。
-  // 此时用 lucide 的 Globe 组件渲染（currentColor 继承容器颜色），替代原来灰色单色 SVG，适配所有主题。
-  const isFallbackIcon = iconState.showFallback || iconState.src === FALLBACK_ICON_SRC;
-
   // 麦金塔主题判断（顶栏彩色装饰仍依赖 theme?.includes('macintosh') 内联判断）
 
   // 底部标签计算：
@@ -303,18 +399,15 @@ const LinkCard = memo(function LinkCard({ link, className, showPromoBadge = fals
 
   // 操作按钮：底栏为中性灰底，按钮统一用半透明底 + 跟随底栏文字色(--card-footer-fg)，
   // 不再依赖“黑底白字”假设，所有主题自动适配
-  // 注意：不用 link-tag class，避免被 simple/bauhaus/macintosh 的 .group .link-tag 主题规则覆盖背景成 --muted 深色
+  // 注意：保留 link-tag class，让麦金塔/包豪斯主题的 .group .link-tag 原始样式生效（方形/黄色）
   const actionClass = cn(
-    'action-btn inline-flex items-center justify-center gap-1 px-2 py-0.5 text-xs rounded-md transition-colors shrink-0 cursor-pointer hover:opacity-80 min-h-[1.25rem]',
+    'link-tag inline-flex items-center justify-center gap-1 px-2 py-0.5 text-xs rounded-md transition-colors shrink-0 cursor-pointer hover:opacity-80 min-h-[1.25rem]',
     'bg-[color:var(--card-footer-fg)]/20 text-[color:var(--card-footer-fg)] border border-[color:var(--card-footer-fg)]/20'
   );
 
-  // 内联样式：用 inline style 覆盖主题 css 里 button { background: var(--primary) } 的全局规则
-  // （否则 cyberpunk 等主题下按钮会被覆盖成 --primary 色如紫色霓虹，与底栏撞色）。
-  // 所有主题统一：白/近白底（--card-footer-fg）+ 固定深色字/图标（按钮底色为白，深色才可见）。
-  // 不能用 --icon-color（深色主题下是白色，白底白字看不见），故用固定深灰。
-  // 仅 mounted 后应用，避免 SSR/CSR 不一致导致 hydration mismatch。
-  const actionStyle = mounted ? {
+  // 操作按钮覆盖样式：由 CSS 变量 --card-action-override 驱动（simple 主题设为 '1'，
+  // 用实色底覆盖 base.css 全局 button { background: var(--primary) } 把按钮染成主题色的问题）。
+  const actionStyle = mounted && actionOverride ? {
     backgroundColor: 'var(--card-footer-fg)',
     color: '#1e293b',
   } : undefined;
@@ -374,38 +467,96 @@ const LinkCard = memo(function LinkCard({ link, className, showPromoBadge = fals
   }, [link.command, showToast]);
 
   const handleShare = useCallback(async () => {
-    // 复制内容：标题 + 描述 + 链接（单行组合，供「只想拷贝」的用户使用）
-    const combined = link.desc
-      ? `${link.name} - ${link.desc} - ${link.url}`
-      : `${link.name} - ${link.url}`;
+    // 分享当前卡片内容本身（标题 + 副标题/描述），不带跳转链接。
+    // 与跳转按钮各司其职：跳转负责打开，分享负责把卡片内容分享出去。
+    const shareText = link.desc ? `${link.name} - ${link.desc}` : link.name;
+
+    // 优先走系统分享面板（仅 HTTPS 安全上下文下可用）
     if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-      // 移动端：先在用户手势内写入剪贴板。
-      // 规避 iOS 取消分享后"用户手势过期"导致 writeText 被拒、复制静默失败的问题。
-      let copied = false;
       try {
-        await navigator.clipboard.writeText(combined);
-        copied = true;
-      } catch {
-        // 复制失败静默处理：链接不可见，提示用户也无法操作
-      }
-      // 再调起系统分享面板：选 App 真正分享时不提示
-      const shareText = link.desc ? `${link.name} - ${link.desc}` : link.name;
-      try {
-        await navigator.share({ title: link.name, text: shareText, url: link.url });
-      } catch {
-        // 用户取消/关闭面板 → 剪贴板已就绪，提示复制成功
-        if (copied) showToast('复制成功，快去分享吧！');
+        // 尝试带上卡片图标（logo）作为分享图片；拿不到或转换失败则退化为纯文本分享
+        const files = await resolveShareIconFiles();
+        const payload: ShareData = { title: link.name, text: shareText };
+        if (files && files.length > 0) payload.files = files;
+        await navigator.share(payload);
+      } catch (err) {
+        // 用户取消（AbortError）静默；其他异常（如 HTTP 环境）回退到复制
+        if ((err as Error)?.name !== 'AbortError') {
+          await fallbackCopy();
+        }
       }
       return;
     }
-    // 桌面端/不支持系统分享：直接复制组合并提示（成功才提示）
-    try {
-      await navigator.clipboard.writeText(combined);
-      showToast('复制成功，快去分享吧！');
-    } catch {
-      // 复制失败静默处理
+
+    // 不支持系统分享（桌面端 / HTTP 环境）：复制卡片内容
+    await fallbackCopy();
+
+    async function fallbackCopy() {
+      try {
+        await navigator.clipboard.writeText(shareText);
+        showToast('已复制卡片内容，快去粘贴分享吧！');
+      } catch {
+        // 剪贴板 API 在非安全上下文（HTTP）下不可用，退化为手动选择复制
+        const copied = copyTextFallback(shareText);
+        if (copied) {
+          showToast('已复制卡片内容，快去粘贴分享吧！');
+        } else {
+          showToast('复制失败，请长按手动复制内容');
+        }
+      }
     }
-  }, [link.name, link.url, link.desc, showToast]);
+
+    // 将卡片图标（iconfile 优先，其次 iconlink）下载并转为 File，供 navigator.share 使用。
+    // 仅图片 URL 可转；lucide 图标是矢量组件，无法转 File，返回空数组。
+    async function resolveShareIconFiles(): Promise<File[]> {
+      const imgUrl = link.iconfile || link.iconlink;
+      if (!imgUrl) return [];
+      try {
+        const res = await fetch(imgUrl);
+        if (!res.ok) return [];
+        const blob = await res.blob();
+        // 非图片类型直接跳过
+        if (!blob.type.startsWith('image/')) return [];
+        const ext = (blob.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
+        return [new File([blob], `${link.name}.${ext}`, { type: blob.type })];
+      } catch {
+        return [];
+      }
+    }
+  }, [link.name, link.desc, link.iconfile, link.iconlink, showToast]);
+
+  // 🆕 加密卡片：点击跳转按钮 → 弹出密码对话框，验证通过后跳转
+  const handleOpen = useCallback((e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!isEncrypted) return; // 公开：直接放行，由 <a> 默认跳转
+    e.preventDefault();
+    if (unlocked) {
+      // 已解锁：直接新窗口打开
+      window.open(link.url, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    unlockTargetRef.current = link.url;
+    setUnlockError('');
+    setUnlockOpen(true);
+  }, [isEncrypted, unlocked, link.url]);
+
+  // 密码验证确认
+  const handleUnlockConfirm = useCallback((password: string) => {
+    if (verifyPassword(password, link.passwordHash)) {
+      setUnlocked(true);
+      setUnlockOpen(false);
+      setUnlockError('');
+      const target = unlockTargetRef.current || link.url;
+      window.open(target, '_blank', 'noopener,noreferrer');
+      showToast('密码正确，已解锁');
+    } else {
+      setUnlockError('密码错误，请重新输入');
+    }
+  }, [link.passwordHash, link.url, showToast]);
+
+  const handleUnlockCancel = useCallback(() => {
+    setUnlockOpen(false);
+    setUnlockError('');
+  }, []);
 
   useEffect(() => () => {
     if (toastTimer.current) window.clearTimeout(toastTimer.current);
@@ -497,49 +648,43 @@ const LinkCard = memo(function LinkCard({ link, className, showPromoBadge = fals
       <>
       <motion.div
           ref={cardRef}
-          // 包豪斯主题下禁用 hover scale：与 bauhaus 自带的 :hover transform translate(-1,-1) +
-          // backdrop-blur-md 叠加会产生可见的白色毛边（浅色背景下最明显），其他主题保留缩放反馈
-          whileHover={theme?.startsWith('bauhaus') ? undefined : { scale: 1.02 }}
+          // 悬停缩放：由 CSS 变量 --card-hover-scale 控制（默认 1.02；包豪斯/麦金塔设为 1 禁用）。
+          whileHover={hoverScale !== 1 ? { scale: hoverScale } : undefined}
           whileTap={{ scale: 0.98 }}
           data-has-color={cardColorData.applyColor ? 'true' : undefined}
           className={cn(
             "group flex h-full flex-col rounded-xl border border-border/50 hover:border-primary/50 transition-all overflow-hidden",
-            // 麦金塔主题保留原主题容器样式（边框/阴影/面板色由主题 CSS 提供）；
-            // 其他有颜色的卡片使用半透明毛玻璃，与深色主题观感一致
-            cardColorData.applyColor && !theme?.includes('macintosh') ? "backdrop-blur-md" : "bg-card",
+            // 卡片表面：有颜色卡片用半透明毛玻璃（深色主题观感），麦金塔主题由 CSS 覆盖背景色
+            "bg-card",
+            cardColorData.applyColor && "backdrop-blur-md",
             "hover:shadow-lg hover:shadow-primary/5",
             "w-full max-w-full",
             className
           )}
-          style={cardColorData.applyColor && !theme?.includes('macintosh')
-            ? { backgroundColor: 'rgba(255,255,255,0.08)' }
+          style={cardColorData.applyColor
+            ? { backgroundColor: 'var(--card-surface-colored)' }
             : undefined}
         >
-          {/* 彩色顶栏：图标 + 标题（仅在有 cardColor 时显示背景色） */}
+          {/* 彩色顶栏：图标 + 标题（仅在有 cardColor 时显示背景色）。
+              统一框架：布局值全部由 CSS 变量 + data-theme 驱动，组件内不写主题条件判断。 */}
           <div
             className={cn(
-              "flex-shrink-0",
-              cardColorData.applyColor && "min-h-[6rem]",
-              // 麦金塔主题：顶栏压在 ::before 装饰条之上(z-index:1)，自身内部再画一条相同纹理，
-              // 实现“装饰条可见 + 彩色铺满无间隙”，彻底解决二者互斥
-              cardColorData.applyColor && theme?.includes('macintosh') && "mac-topbar"
+              "flex-shrink-0 card-topbar",
+              cardColorData.applyColor && "card-topbar-colored"
             )}
             style={{
               backgroundColor: cardColorData.applyColor ? cardColorData.bg : undefined,
               color: cardColorData.applyColor ? cardColorData.textColor : undefined,
-              position: cardColorData.applyColor ? 'relative' : undefined,
-              zIndex: cardColorData.applyColor ? 1 : undefined,
             }}
           >
-            {/* 麦金塔装饰条：复制 ::before 的标题栏纹理，位于彩色背景之上、内容之下 */}
-            {cardColorData.applyColor && theme?.includes('macintosh') && (
-              <span className="mac-titlebar-overlay" aria-hidden="true" />
-            )}
+            <span className="mac-titlebar-overlay" aria-hidden="true" />
             <div
-              className="flex flex-col items-start gap-2 p-2.5 w-full"
+              className="flex flex-col items-start gap-[var(--card-gap)] w-full card-topbar-inner"
               style={{
-                // 麦金塔主题下顶部预留 0.95rem（装饰条高度）让标题栏纹理显示在彩色背景之上
-                paddingTop: cardColorData.applyColor && theme?.includes('macintosh') ? 'calc(0.95rem + 0.625rem)' : undefined,
+                paddingTop: 'var(--card-topbar-pad-top)',
+                paddingRight: 'var(--card-topbar-pad-right)',
+                paddingBottom: 'var(--card-topbar-pad-bottom)',
+                paddingLeft: 'var(--card-topbar-pad-left)',
               }}
             >
             {/* 图标容器（半透明白底毛玻璃方块 + 白字图标，对齐截图/inBoxCard-main Home.tsx:204） */}
@@ -551,7 +696,8 @@ const LinkCard = memo(function LinkCard({ link, className, showPromoBadge = fals
                 "relative w-10 h-10 overflow-hidden transition-all shrink-0 p-1.5",
                 "flex items-center justify-center",
                 "rounded-xl bg-white/20 backdrop-blur-sm",
-                cardColorData.applyColor ? "text-white" : "text-[color:var(--icon-color)]"
+                // 图标文字色：有颜色卡片用 --card-fg-colored（白），无颜色用 --icon-color（主题适配）
+                cardColorData.applyColor ? "text-[color:var(--card-fg-colored)]" : "text-[color:var(--icon-color)]"
               )}
               style={undefined}
             >
@@ -571,11 +717,12 @@ const LinkCard = memo(function LinkCard({ link, className, showPromoBadge = fals
                     // 名称未命中：回退到图片图标流程
                     return (
                       <>
-                        {isFallbackIcon ? (
-                          <LucideIcons.Globe className="w-full h-full" />
-                        ) : (
-                          <OptimisedLinkIcon src={iconState.src} alt={link.name} onLoad={handleImageLoad} onError={handleImageError} />
-                        )}
+                        <RemoteIcon
+                          iconState={iconState}
+                          link={link}
+                          onLoad={handleImageLoad}
+                          onError={handleImageError}
+                        />
                         {iconState.showSpinner && (
                           <div className="absolute inset-0 flex items-center justify-center bg-muted/20">
                             <div className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
@@ -586,17 +733,12 @@ const LinkCard = memo(function LinkCard({ link, className, showPromoBadge = fals
                   })()
                 ) : (
                   <>
-                    {isFallbackIcon ? (
-                      <LucideIcons.Globe className="w-full h-full" />
-                    ) : (
-                      <OptimisedLinkIcon 
-                          src={iconState.src} 
-                          alt={link.name} 
-                          onLoad={handleImageLoad}
-                          onError={handleImageError}
-                      />
-                    )}
-                  
+                    <RemoteIcon
+                      iconState={iconState}
+                      link={link}
+                      onLoad={handleImageLoad}
+                      onError={handleImageError}
+                    />
                     {iconState.showSpinner && (
                       <div className="absolute inset-0 flex items-center justify-center bg-muted/20">
                         <div className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin"></div>
@@ -714,9 +856,10 @@ const LinkCard = memo(function LinkCard({ link, className, showPromoBadge = fals
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={handleOpen}
                   className={actionClass}
                   style={actionStyle}
-                  title="打开"
+                  title={isEncrypted ? '输入密码打开' : '打开'}
                   aria-label="打开"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
@@ -754,6 +897,14 @@ const LinkCard = memo(function LinkCard({ link, className, showPromoBadge = fals
 
       {/* Toast 提示 */}
       <Toast msg={toast.msg} show={toast.show} />
+
+      {/* 🆕 加密卡片密码验证对话框 */}
+      <PasswordDialog
+        open={unlockOpen}
+        error={unlockError}
+        onCancel={handleUnlockCancel}
+        onConfirm={handleUnlockConfirm}
+      />
     </>
   );
 }, (prev, next) => {
@@ -768,6 +919,8 @@ const LinkCard = memo(function LinkCard({ link, className, showPromoBadge = fals
         prev.link.iconlink === next.link.iconlink &&
         prev.link.cardColor === next.link.cardColor &&
         prev.link.command === next.link.command &&
+        prev.link.status === next.link.status &&
+        prev.link.passwordHash === next.link.passwordHash &&
         prev.className === next.className
     );
 });
