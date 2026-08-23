@@ -2,6 +2,7 @@
 
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { Link } from '@/types';
+import { Link as NextLink } from 'next/link';
 import { ExternalLink } from 'lucide-react';
 import { verifyPassword } from '@/lib/password';
 
@@ -213,12 +214,12 @@ export default function LinkDetailCard({ link }: { link: Link }) {
 
       {/* 返回首页按钮 */}
       <div className="flex justify-center mt-2">
-        <a
+        <NextLink
           href="/"
           className="px-5 py-1.5 rounded-md border border-border text-foreground text-xs font-medium hover:bg-accent transition-colors"
         >
           返回首页
-        </a>
+        </NextLink>
       </div>
     </div>
   );
