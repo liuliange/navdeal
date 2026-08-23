@@ -2,7 +2,7 @@
 
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { Link } from '@/types';
-import { Link as NextLink } from 'next/link';
+import NextLink from 'next/link';
 import { ExternalLink } from 'lucide-react';
 import { verifyPassword } from '@/lib/password';
 
