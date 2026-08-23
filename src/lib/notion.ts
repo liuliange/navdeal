@@ -83,6 +83,12 @@ export const getLinks = cache(async () => {
     }
 });
 
+// 根据 id 获取单个链接（用于分享详情页 /link/[id]）
+export const getLinkById = cache(async (id: string): Promise<Link | null> => {
+    const links = await getLinks();
+    return links.find((l) => l.id === id) ?? null;
+});
+
 // 获取网站配置
 export const getWebsiteConfig = cache(async () => {
     try {

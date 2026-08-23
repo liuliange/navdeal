@@ -467,20 +467,18 @@ const LinkCard = memo(function LinkCard({ link, className, showPromoBadge = fals
   }, [link.command, showToast]);
 
   const handleShare = useCallback(async () => {
-    // 分享当前卡片内容本身（标题 + 副标题/描述），不带跳转链接。
-    // 与跳转按钮各司其职：跳转负责打开，分享负责把卡片内容分享出去。
+    // 分享当前卡片的「详情页链接」（/link/[id]）。
+    // 微信/微博/朋友圈分享出去的是一段 URL，接收方点开能看到卡片的标题-描述+图标
+    // （由详情页的 OG 元数据提供）。与跳转按钮各司其职：跳转负责打开原链接，分享负责传播卡片。
+    const shareUrl = `${window.location.origin}/link/${link.id}`;
     const shareText = link.desc ? `${link.name} - ${link.desc}` : link.name;
 
     // 优先走系统分享面板（仅 HTTPS 安全上下文下可用）
     if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
       try {
-        // 尝试带上卡片图标（logo）作为分享图片；拿不到或转换失败则退化为纯文本分享
-        const files = await resolveShareIconFiles();
-        const payload: ShareData = { title: link.name, text: shareText };
-        if (files && files.length > 0) payload.files = files;
-        await navigator.share(payload);
+        await navigator.share({ title: link.name, text: shareText, url: shareUrl });
       } catch (err) {
-        // 用户取消（AbortError）静默；其他异常（如 HTTP 环境）回退到复制
+        // 用户取消（AbortError）静默；其他异常（如 HTTP 环境）回退到复制链接
         if ((err as Error)?.name !== 'AbortError') {
           await fallbackCopy();
         }
@@ -488,42 +486,24 @@ const LinkCard = memo(function LinkCard({ link, className, showPromoBadge = fals
       return;
     }
 
-    // 不支持系统分享（桌面端 / HTTP 环境）：复制卡片内容
+    // 不支持系统分享（桌面端 / HTTP 环境）：复制卡片链接
     await fallbackCopy();
 
     async function fallbackCopy() {
       try {
-        await navigator.clipboard.writeText(shareText);
-        showToast('已复制卡片内容，快去粘贴分享吧！');
+        await navigator.clipboard.writeText(shareUrl);
+        showToast('已复制卡片链接，快去粘贴分享吧！');
       } catch {
         // 剪贴板 API 在非安全上下文（HTTP）下不可用，退化为手动选择复制
-        const copied = copyTextFallback(shareText);
+        const copied = copyTextFallback(shareUrl);
         if (copied) {
-          showToast('已复制卡片内容，快去粘贴分享吧！');
+          showToast('已复制卡片链接，快去粘贴分享吧！');
         } else {
           showToast('复制失败，请长按手动复制内容');
         }
       }
     }
-
-    // 将卡片图标（iconfile 优先，其次 iconlink）下载并转为 File，供 navigator.share 使用。
-    // 仅图片 URL 可转；lucide 图标是矢量组件，无法转 File，返回空数组。
-    async function resolveShareIconFiles(): Promise<File[]> {
-      const imgUrl = link.iconfile || link.iconlink;
-      if (!imgUrl) return [];
-      try {
-        const res = await fetch(imgUrl);
-        if (!res.ok) return [];
-        const blob = await res.blob();
-        // 非图片类型直接跳过
-        if (!blob.type.startsWith('image/')) return [];
-        const ext = (blob.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
-        return [new File([blob], `${link.name}.${ext}`, { type: blob.type })];
-      } catch {
-        return [];
-      }
-    }
-  }, [link.name, link.desc, link.iconfile, link.iconlink, showToast]);
+  }, [link.id, link.name, link.desc, showToast]);
 
   // 🆕 加密卡片：点击跳转按钮 → 弹出密码对话框，验证通过后跳转
   const handleOpen = useCallback((e: React.MouseEvent<HTMLAnchorElement>) => {
